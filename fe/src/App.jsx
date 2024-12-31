@@ -1,9 +1,32 @@
 import { useEffect } from 'react';
+import { 
+  CssBaseline, 
+  ThemeProvider, 
+  createTheme,
+  Container,
+  AppBar,
+  Toolbar,
+  Typography,
+  Box,
+  Button
+} from '@mui/material';
 import { logger } from './services/logger';
+
+// Create a theme instance
+const theme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#1976d2',
+    },
+    secondary: {
+      main: '#dc004e',
+    },
+  },
+});
 
 function App() {
   useEffect(() => {
-    // Test logging on component mount
     logger.info('App component mounted', { component: 'App' });
   }, []);
 
@@ -16,25 +39,37 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Welcome to the Application</h1>
-        <button 
-          onClick={testLogging}
-          style={{
-            padding: '10px 20px',
-            fontSize: '16px',
-            borderRadius: '5px',
-            border: 'none',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            cursor: 'pointer'
-          }}
-        >
-          Test Logging
-        </button>
-      </header>
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box sx={{ flexGrow: 1 }}>
+        <AppBar position="static">
+          <Toolbar>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              Financial Transactions
+            </Typography>
+          </Toolbar>
+        </AppBar>
+        <Container maxWidth="lg" sx={{ mt: 4 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center',
+            gap: 2 
+          }}>
+            <Typography variant="h4" component="h1" gutterBottom>
+              Welcome to the Application
+            </Typography>
+            <Button 
+              variant="contained" 
+              color="primary"
+              onClick={testLogging}
+            >
+              Test Logging
+            </Button>
+          </Box>
+        </Container>
+      </Box>
+    </ThemeProvider>
   );
 }
 
