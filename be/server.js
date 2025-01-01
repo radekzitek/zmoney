@@ -95,6 +95,51 @@ app.get('/api/counterparties', async (req, res) => {
   }
 });
 
+// Add this route to your existing routes
+app.get('/api/categories', async (req, res) => {
+  try {
+    const pool = require('./config/database');
+    const result = await pool.query(
+      'SELECT id, name, description FROM categories ORDER BY name'
+    );
+    
+    res.json(result.rows);
+    logger.info('Categories fetched successfully', { count: result.rows.length });
+  } catch (error) {
+    logger.error('Error fetching categories:', { error: error.message });
+    res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+});
+
+// Add this route to your existing routes
+app.get('/api/transactions', async (req, res) => {
+  try {
+    const pool = require('./config/database');
+    const result = await pool.query(`
+      SELECT 
+        t.id,
+        t.transaction_date,
+        t.value_date,
+        t.amount,
+        t.currency,
+        t.description,
+        t.reference,
+        c.name as category_name,
+        cp.name as counterparty_name
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      LEFT JOIN counterparties cp ON t.counterparty_id = cp.id
+      ORDER BY t.transaction_date DESC, t.value_date DESC
+    `);
+    
+    res.json(result.rows);
+    logger.info('Transactions fetched successfully', { count: result.rows.length });
+  } catch (error) {
+    logger.error('Error fetching transactions:', { error: error.message });
+    res.status(500).json({ error: 'Failed to fetch transactions' });
+  }
+});
+
 app.listen(port, () => {
   logger.info(`Server is running on port ${port}`);
 }); 
