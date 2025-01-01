@@ -2,10 +2,13 @@ import {
   Box, 
   Paper, 
   Typography,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
   IconButton,
   Fab,
   TextField,
@@ -20,12 +23,16 @@ import {
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { logger } from '../services/logger';
+import { commonStyles } from '../styles/common';
+import { counterpartyStyles } from '../styles/counterparties';
 
 function Counterparties() {
   const [counterparties, setCounterparties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     fetchCounterparties();
@@ -49,32 +56,46 @@ function Counterparties() {
 
   const filteredCounterparties = counterparties.filter(cp => 
     cp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (cp.reference && cp.reference.toLowerCase().includes(searchTerm.toLowerCase()))
+    (cp.reference && cp.reference.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (cp.description && cp.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-GB');
+  };
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+      <Box sx={commonStyles.loadingContainer}>
         <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={commonStyles.pageContainer}>
       <Typography variant="h4" gutterBottom>
         Counterparties
       </Typography>
       
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={counterpartyStyles.errorAlert}>
           {error}
         </Alert>
       )}
 
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-end', mb: 2 }}>
-          <SearchIcon sx={{ color: 'action.active', mr: 1, my: 0.5 }} />
+      <Paper sx={commonStyles.searchContainer}>
+        <Box sx={commonStyles.searchBox}>
+          <SearchIcon sx={commonStyles.searchIcon} />
           <TextField 
             label="Search Counterparties" 
             variant="standard" 
@@ -85,40 +106,64 @@ function Counterparties() {
         </Box>
       </Paper>
 
-      <Paper sx={{ width: '100%', mb: 2 }}>
-        <List>
-          {filteredCounterparties.length === 0 ? (
-            <ListItem>
-              <ListItemText 
-                primary="No counterparties found" 
-                secondary={searchTerm ? "Try adjusting your search" : "Add some counterparties to get started"}
-              />
-            </ListItem>
-          ) : (
-            filteredCounterparties.map((cp) => (
-              <ListItem key={cp.id}>
-                <ListItemText
-                  primary={cp.name}
-                  secondary={cp.reference}
-                />
-                <ListItemSecondaryAction>
-                  <IconButton edge="end" aria-label="edit">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton edge="end" aria-label="delete">
-                    <DeleteIcon />
-                  </IconButton>
-                </ListItemSecondaryAction>
-              </ListItem>
-            ))
-          )}
-        </List>
+      <Paper sx={commonStyles.tableContainer}>
+        <TableContainer>
+          <Table sx={commonStyles.table} size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Reference</TableCell>
+                <TableCell>Description</TableCell>
+                <TableCell>Created</TableCell>
+                <TableCell>Updated</TableCell>
+                <TableCell sx={counterpartyStyles.actionCell}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredCounterparties
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((cp) => (
+                  <TableRow key={cp.id}>
+                    <TableCell>{cp.name}</TableCell>
+                    <TableCell>{cp.reference}</TableCell>
+                    <TableCell>{cp.description}</TableCell>
+                    <TableCell>{formatDate(cp.created_at)}</TableCell>
+                    <TableCell>{formatDate(cp.updated_at)}</TableCell>
+                    <TableCell sx={counterpartyStyles.actionCell}>
+                      <IconButton size="small">
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton size="small">
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              {filteredCounterparties.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} sx={commonStyles.tableEmptyCell}>
+                    {searchTerm ? "No counterparties found matching your search" : "No counterparties yet"}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={filteredCounterparties.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
       </Paper>
 
       <Fab 
         color="primary" 
         aria-label="add"
-        sx={{ position: 'fixed', bottom: 16, right: 16 }}
+        sx={commonStyles.actionButton}
       >
         <AddIcon />
       </Fab>

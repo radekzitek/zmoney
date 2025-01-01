@@ -2,10 +2,13 @@ import {
   Box, 
   Paper, 
   Typography,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
   IconButton,
   Fab,
   TextField,
@@ -20,12 +23,16 @@ import {
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { logger } from '../services/logger';
+import { commonStyles } from '../styles/common';
+import { categoryStyles } from '../styles/categories';
 
 function Categories() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     fetchCategories();
@@ -52,29 +59,42 @@ function Categories() {
     (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-GB');
+  };
+
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+      <Box sx={categoryStyles.loadingContainer}>
         <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={commonStyles.pageContainer}>
       <Typography variant="h4" gutterBottom>
         Categories
       </Typography>
       
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={categoryStyles.errorAlert}>
           {error}
         </Alert>
       )}
 
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-end', mb: 2 }}>
-          <SearchIcon sx={{ color: 'action.active', mr: 1, my: 0.5 }} />
+      <Paper sx={commonStyles.searchContainer}>
+        <Box sx={commonStyles.searchBox}>
+          <SearchIcon sx={commonStyles.searchIcon} />
           <TextField 
             label="Search Categories" 
             variant="standard" 
@@ -85,40 +105,62 @@ function Categories() {
         </Box>
       </Paper>
 
-      <Paper sx={{ width: '100%', mb: 2 }}>
-        <List>
-          {filteredCategories.length === 0 ? (
-            <ListItem>
-              <ListItemText 
-                primary="No categories found" 
-                secondary={searchTerm ? "Try adjusting your search" : "Add some categories to get started"}
-              />
-            </ListItem>
-          ) : (
-            filteredCategories.map((category) => (
-              <ListItem key={category.id}>
-                <ListItemText
-                  primary={category.name}
-                  secondary={category.description}
-                />
-                <ListItemSecondaryAction>
-                  <IconButton edge="end" aria-label="edit">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton edge="end" aria-label="delete">
-                    <DeleteIcon />
-                  </IconButton>
-                </ListItemSecondaryAction>
-              </ListItem>
-            ))
-          )}
-        </List>
+      <Paper sx={commonStyles.tableContainer}>
+        <TableContainer>
+          <Table sx={commonStyles.table} size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Description</TableCell>
+                <TableCell>Created</TableCell>
+                <TableCell>Updated</TableCell>
+                <TableCell sx={categoryStyles.actionCell}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredCategories
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((category) => (
+                  <TableRow key={category.id}>
+                    <TableCell>{category.name}</TableCell>
+                    <TableCell>{category.description}</TableCell>
+                    <TableCell>{formatDate(category.created_at)}</TableCell>
+                    <TableCell>{formatDate(category.updated_at)}</TableCell>
+                    <TableCell sx={categoryStyles.actionCell}>
+                      <IconButton size="small">
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton size="small">
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              {filteredCategories.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} sx={commonStyles.tableEmptyCell}>
+                    {searchTerm ? "No categories found matching your search" : "No categories yet"}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={filteredCategories.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
       </Paper>
 
       <Fab 
         color="primary" 
         aria-label="add"
-        sx={{ position: 'fixed', bottom: 16, right: 16 }}
+        sx={commonStyles.actionButton}
       >
         <AddIcon />
       </Fab>

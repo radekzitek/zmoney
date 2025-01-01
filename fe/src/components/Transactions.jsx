@@ -23,6 +23,8 @@ import {
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { logger } from '../services/logger';
+import { commonStyles } from '../styles/common';
+import { transactionStyles } from '../styles/transactions';
 
 function Transactions() {
   const [transactions, setTransactions] = useState([]);
@@ -88,7 +90,7 @@ function Transactions() {
   }
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={commonStyles.pageContainer}>
       <Typography variant="h4" gutterBottom>
         Transactions
       </Typography>
@@ -99,9 +101,9 @@ function Transactions() {
         </Alert>
       )}
 
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-end', mb: 2 }}>
-          <SearchIcon sx={{ color: 'action.active', mr: 1, my: 0.5 }} />
+      <Paper sx={commonStyles.searchContainer}>
+        <Box sx={commonStyles.searchBox}>
+          <SearchIcon sx={commonStyles.searchIcon} />
           <TextField 
             label="Search Transactions" 
             variant="standard" 
@@ -112,9 +114,9 @@ function Transactions() {
         </Box>
       </Paper>
 
-      <Paper sx={{ width: '100%', mb: 2 }}>
+      <Paper sx={commonStyles.tableContainer}>
         <TableContainer>
-          <Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle" size="small">
+          <Table sx={commonStyles.table} size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Transaction Date</TableCell>
@@ -138,9 +140,7 @@ function Transactions() {
                     <TableCell>{transaction.reference}</TableCell>
                     <TableCell>{transaction.category_name}</TableCell>
                     <TableCell>{transaction.counterparty_name}</TableCell>
-                    <TableCell align="right" sx={{
-                      color: transaction.amount < 0 ? 'error.main' : 'success.main'
-                    }}>
+                    <TableCell align="right" sx={transactionStyles.amountCell(transaction.amount)}>
                       {formatAmount(transaction.amount, transaction.currency)}
                     </TableCell>
                     <TableCell align="right">
@@ -177,7 +177,7 @@ function Transactions() {
       <Fab 
         color="primary" 
         aria-label="add"
-        sx={{ position: 'fixed', bottom: 16, right: 16 }}
+        sx={commonStyles.actionButton}
       >
         <AddIcon />
       </Fab>

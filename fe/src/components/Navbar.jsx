@@ -1,11 +1,4 @@
-import { 
-  AppBar, 
-  Toolbar, 
-  Button,
-  Box,
-  IconButton,
-  Tooltip
-} from '@mui/material';
+import { AppBar, Toolbar, Button, Box, IconButton, Tooltip } from '@mui/material';
 import { 
   AccountBalance as AccountBalanceIcon,
   Assessment as AssessmentIcon,
@@ -17,6 +10,7 @@ import {
   Brightness7 as SunIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { navbarStyles } from '../styles/navbar';
 
 function Navbar({ toggleTheme, mode }) {
   const navigate = useNavigate();
@@ -27,16 +21,13 @@ function Navbar({ toggleTheme, mode }) {
   return (
     <AppBar position="static" elevation={0}>
       <Toolbar>
-        <AccountBalanceIcon sx={{ mr: 2 }} />
-
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        <AccountBalanceIcon sx={navbarStyles.logo} />
+        <Box sx={navbarStyles.menuSection}>
           <Button 
             color="inherit" 
             startIcon={<AssessmentIcon />}
             onClick={() => navigate('/')}
-            sx={{ 
-              backgroundColor: isActive('/') ? 'rgba(255, 255, 255, 0.12)' : 'transparent'
-            }}
+            sx={navbarStyles.menuButton(isActive('/'))}
           >
             Reports
           </Button>
@@ -45,9 +36,7 @@ function Navbar({ toggleTheme, mode }) {
             color="inherit"
             startIcon={<TransactionsIcon />}
             onClick={() => navigate('/transactions')}
-            sx={{ 
-              backgroundColor: isActive('/transactions') ? 'rgba(255, 255, 255, 0.12)' : 'transparent'
-            }}
+            sx={navbarStyles.menuButton(isActive('/transactions'))}
           >
             Transactions
           </Button>
@@ -55,9 +44,7 @@ function Navbar({ toggleTheme, mode }) {
             color="inherit"
             startIcon={<CategoryIcon />}
             onClick={() => navigate('/categories')}
-            sx={{ 
-              backgroundColor: isActive('/categories') ? 'rgba(255, 255, 255, 0.12)' : 'transparent'
-            }}
+            sx={navbarStyles.menuButton(isActive('/categories'))}
           >
             Categories
           </Button>
@@ -65,9 +52,7 @@ function Navbar({ toggleTheme, mode }) {
             color="inherit"
             startIcon={<CounterpartiesIcon />}
             onClick={() => navigate('/counterparties')}
-            sx={{ 
-              backgroundColor: isActive('/counterparties') ? 'rgba(255, 255, 255, 0.12)' : 'transparent'
-            }}
+            sx={navbarStyles.menuButton(isActive('/counterparties'))}
           >
             Counterparties
           </Button>
@@ -75,9 +60,7 @@ function Navbar({ toggleTheme, mode }) {
             color="inherit"
             startIcon={<InfoIcon />}
             onClick={() => navigate('/about')}
-            sx={{ 
-              backgroundColor: isActive('/about') ? 'rgba(255, 255, 255, 0.12)' : 'transparent'
-            }}
+            sx={navbarStyles.menuButton(isActive('/about'))}
           >
             About
           </Button>
@@ -85,7 +68,7 @@ function Navbar({ toggleTheme, mode }) {
             <IconButton 
               color="inherit" 
               onClick={toggleTheme}
-              sx={{ ml: 1 }}
+              sx={navbarStyles.themeButton}
             >
               {mode === 'light' ? <MoonIcon /> : <SunIcon />}
             </IconButton>
