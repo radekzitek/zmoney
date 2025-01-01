@@ -22,7 +22,9 @@ function About() {
   useEffect(() => {
     const fetchSystemInfo = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/system-info`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/system/info`);
+        if (!response.ok) throw new Error('Failed to fetch system info');
+        
         const data = await response.json();
         setSystemInfo(data);
         logger.info('System info fetched successfully');

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CssBaseline, ThemeProvider } from '@mui/material';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { logger } from './services/logger';
 import { createAppTheme } from './styles/theme';
 
@@ -11,6 +11,24 @@ import Reports from './components/Reports';
 import Transactions from './components/Transactions';
 import Categories from './components/Categories';
 import Counterparties from './components/Counterparties';
+
+// Navigation logger component
+function NavigationLogger() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const path = location.pathname;
+    const componentName = path === '/' ? 'Reports' : 
+      path.charAt(1).toUpperCase() + path.slice(2).toLowerCase();
+    
+    logger.info('Navigation', { 
+      to: path,
+      component: componentName
+    });
+  }, [location]);
+
+  return null;
+}
 
 /**
  * Main application component
@@ -38,6 +56,7 @@ function App() {
     <Router>
       <ThemeProvider theme={theme}>
         <CssBaseline />
+        <NavigationLogger />
         <Layout toggleTheme={toggleTheme} mode={mode}>
           <Routes>
             <Route path="/" element={<Reports />} />

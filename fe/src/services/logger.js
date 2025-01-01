@@ -1,61 +1,44 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-
 class Logger {
   constructor() {
-    this.queue = [];
-    this.isOnline = navigator.onLine;
-    
-    window.addEventListener('online', () => {
-      this.isOnline = true;
-      this.processQueue();
-    });
-    
-    window.addEventListener('offline', () => {
-      this.isOnline = false;
-    });
+    this.apiUrl = `${import.meta.env.VITE_API_URL}/system/logs`;
   }
 
-  async processQueue() {
-    while (this.isOnline && this.queue.length > 0) {
-      const data = this.queue.shift();
-      await this.sendToServer(data);
-    }
-  }
-
-  async sendToServer(data) {
-    if (!this.isOnline) {
-      this.queue.push(data);
-      return;
-    }
-    
+  async log(level, message, meta = {}) {
     try {
-      const response = await fetch(`${API_URL}/logs`, {
+      const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          level,
+          message,
+          meta: {
+            ...meta,
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString()
+          }
+        })
       });
-      
+
       if (!response.ok) {
-        throw new Error(await response.text());
+        console.error('Failed to send log to backend:', await response.text());
       }
     } catch (error) {
-      console.error('Error sending log to server:', error);
-      this.queue.push(data);
+      console.error('Error sending log to backend:', error);
     }
   }
 
-  info(message, meta) {
-    this.sendToServer({ level: 'info', message, meta });
+  info(message, meta = {}) {
+    this.log('info', message, meta);
   }
 
-  warn(message, meta) {
-    this.sendToServer({ level: 'warn', message, meta });
+  warn(message, meta = {}) {
+    this.log('warn', message, meta);
   }
 
-  error(message, meta) {
-    this.sendToServer({ level: 'error', message, meta });
+  error(message, meta = {}) {
+    this.log('error', message, meta);
   }
 }
 
