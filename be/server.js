@@ -22,17 +22,6 @@ app.use(morgan('combined', {
   }
 }));
 
-// Example route with logging
-app.get('/api/test', (req, res) => {
-  logger.info('Test endpoint called', {
-    timestamp: new Date(),
-    path: req.path,
-    query: req.query
-  });
-  
-  res.json({ message: 'Backend is working!' });
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   logger.error('Unhandled error:', {
@@ -77,6 +66,33 @@ app.post('/api/logs', limiter, (req, res) => {
   });
 
   res.json({ status: 'ok' });
+});
+
+// Add this route to your existing routes
+app.get('/api/system-info', (req, res) => {
+  res.json({
+    backend: {
+      version: process.env.npm_package_version || '1.0.0',
+      status: 'Online',
+      environment: process.env.NODE_ENV
+    }
+  });
+});
+
+// Add this route to your existing routes
+app.get('/api/counterparties', async (req, res) => {
+  try {
+    const pool = require('./config/database');
+    const result = await pool.query(
+      'SELECT id, name, reference, description FROM counterparties ORDER BY name'
+    );
+    
+    res.json(result.rows);
+    logger.info('Counterparties fetched successfully', { count: result.rows.length });
+  } catch (error) {
+    logger.error('Error fetching counterparties:', { error: error.message });
+    res.status(500).json({ error: 'Failed to fetch counterparties' });
+  }
 });
 
 app.listen(port, () => {
