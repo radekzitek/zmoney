@@ -13,7 +13,9 @@ import {
   Fab,
   TextField,
   CircularProgress,
-  Alert
+  Alert,
+  Snackbar,
+  Alert as MuiAlert
 } from '@mui/material';
 import { 
   Add as AddIcon,
@@ -25,6 +27,8 @@ import { useState, useEffect } from 'react';
 import { logger } from '../services/logger';
 import { commonStyles } from '../styles/common';
 import { counterpartyStyles } from '../styles/counterparties';
+import CounterpartyDialog from './CounterpartyDialog';
+import ConfirmDialog from './ConfirmDialog';
 
 function Counterparties() {
   const [counterparties, setCounterparties] = useState([]);
@@ -33,6 +37,10 @@ function Counterparties() {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [selectedCounterparty, setSelectedCounterparty] = useState(null);
+  const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
     fetchCounterparties();
@@ -71,6 +79,69 @@ function Counterparties() {
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-GB');
+  };
+
+  const handleAdd = () => {
+    setSelectedCounterparty(null);
+    setDialogOpen(true);
+  };
+
+  const handleEdit = (counterparty) => {
+    setSelectedCounterparty(counterparty);
+    setDialogOpen(true);
+  };
+
+  const handleDelete = (counterparty) => {
+    setSelectedCounterparty(counterparty);
+    setConfirmDialogOpen(true);
+  };
+
+  const handleSave = async (formData) => {
+    try {
+      const url = selectedCounterparty
+        ? `${import.meta.env.VITE_API_URL}/counterparties/${selectedCounterparty.id}`
+        : `${import.meta.env.VITE_API_URL}/counterparties`;
+      
+      const response = await fetch(url, {
+        method: selectedCounterparty ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) throw new Error('Failed to save counterparty');
+      
+      await fetchCounterparties();
+      setDialogOpen(false);
+      showNotification(
+        `Counterparty ${selectedCounterparty ? 'updated' : 'created'} successfully`,
+        'success'
+      );
+    } catch (error) {
+      logger.error('Error saving counterparty:', { error: error.message });
+      showNotification('Failed to save counterparty', 'error');
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/counterparties/${selectedCounterparty.id}`,
+        { method: 'DELETE' }
+      );
+
+      if (!response.ok) throw new Error('Failed to delete counterparty');
+      
+      await fetchCounterparties();
+      setConfirmDialogOpen(false);
+      showNotification('Counterparty deleted successfully', 'success');
+    } catch (error) {
+      logger.error('Error deleting counterparty:', { error: error.message });
+      showNotification('Failed to delete counterparty', 'error');
+    }
+  };
+
+  const showNotification = (message, severity) => {
+    setNotification({ open: true, message, severity });
   };
 
   if (loading) {
@@ -130,10 +201,10 @@ function Counterparties() {
                     <TableCell>{formatDate(cp.created_at)}</TableCell>
                     <TableCell>{formatDate(cp.updated_at)}</TableCell>
                     <TableCell sx={counterpartyStyles.actionCell}>
-                      <IconButton size="small">
+                      <IconButton size="small" onClick={() => handleEdit(cp)}>
                         <EditIcon />
                       </IconButton>
-                      <IconButton size="small">
+                      <IconButton size="small" onClick={() => handleDelete(cp)}>
                         <DeleteIcon />
                       </IconButton>
                     </TableCell>
@@ -163,10 +234,41 @@ function Counterparties() {
       <Fab 
         color="primary" 
         aria-label="add"
+        onClick={handleAdd}
         sx={commonStyles.actionButton}
       >
         <AddIcon />
       </Fab>
+
+      <CounterpartyDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onSave={handleSave}
+        counterparty={selectedCounterparty}
+      />
+
+      <ConfirmDialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Counterparty"
+        message={`Are you sure you want to delete ${selectedCounterparty?.name}?`}
+      />
+
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={() => setNotification({ ...notification, open: false })}
+      >
+        <MuiAlert 
+          elevation={6} 
+          variant="filled" 
+          severity={notification.severity}
+          onClose={() => setNotification({ ...notification, open: false })}
+        >
+          {notification.message}
+        </MuiAlert>
+      </Snackbar>
     </Box>
   );
 }

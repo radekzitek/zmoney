@@ -84,7 +84,7 @@ app.get('/api/counterparties', async (req, res) => {
   try {
     const pool = require('./config/database');
     const result = await pool.query(
-      'SELECT id, name, reference, description FROM counterparties ORDER BY name'
+      'SELECT id, name, reference, description, created_at, updated_at FROM counterparties ORDER BY name'
     );
     
     res.json(result.rows);
@@ -100,7 +100,7 @@ app.get('/api/categories', async (req, res) => {
   try {
     const pool = require('./config/database');
     const result = await pool.query(
-      'SELECT id, name, description FROM categories ORDER BY name'
+      'SELECT id, name, description, created_at, updated_at FROM categories ORDER BY name'
     );
     
     res.json(result.rows);
@@ -137,6 +137,144 @@ app.get('/api/transactions', async (req, res) => {
   } catch (error) {
     logger.error('Error fetching transactions:', { error: error.message });
     res.status(500).json({ error: 'Failed to fetch transactions' });
+  }
+});
+
+// Add these routes to handle CRUD operations for counterparties
+app.post('/api/counterparties', async (req, res) => {
+  try {
+    const { name, reference, description } = req.body;
+    const pool = require('./config/database');
+    
+    const result = await pool.query(
+      `INSERT INTO counterparties (name, reference, description) 
+       VALUES ($1, $2, $3) 
+       RETURNING id, name, reference, description, created_at, updated_at`,
+      [name, reference, description]
+    );
+    
+    res.status(201).json(result.rows[0]);
+    logger.info('Counterparty created successfully', { id: result.rows[0].id });
+  } catch (error) {
+    logger.error('Error creating counterparty:', { error: error.message });
+    res.status(500).json({ error: 'Failed to create counterparty' });
+  }
+});
+
+app.put('/api/counterparties/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, reference, description } = req.body;
+    const pool = require('./config/database');
+    
+    const result = await pool.query(
+      `UPDATE counterparties 
+       SET name = $1, reference = $2, description = $3, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $4
+       RETURNING id, name, reference, description, created_at, updated_at`,
+      [name, reference, description, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Counterparty not found' });
+    }
+    
+    res.json(result.rows[0]);
+    logger.info('Counterparty updated successfully', { id });
+  } catch (error) {
+    logger.error('Error updating counterparty:', { error: error.message });
+    res.status(500).json({ error: 'Failed to update counterparty' });
+  }
+});
+
+app.delete('/api/counterparties/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pool = require('./config/database');
+    
+    const result = await pool.query(
+      'DELETE FROM counterparties WHERE id = $1 RETURNING id',
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Counterparty not found' });
+    }
+    
+    res.json({ message: 'Counterparty deleted successfully' });
+    logger.info('Counterparty deleted successfully', { id });
+  } catch (error) {
+    logger.error('Error deleting counterparty:', { error: error.message });
+    res.status(500).json({ error: 'Failed to delete counterparty' });
+  }
+});
+
+// Add CRUD endpoints for categories
+app.post('/api/categories', async (req, res) => {
+  try {
+    const { name, description } = req.body;
+    const pool = require('./config/database');
+    
+    const result = await pool.query(
+      `INSERT INTO categories (name, description) 
+       VALUES ($1, $2) 
+       RETURNING id, name, description, created_at, updated_at`,
+      [name, description]
+    );
+    
+    res.status(201).json(result.rows[0]);
+    logger.info('Category created successfully', { id: result.rows[0].id });
+  } catch (error) {
+    logger.error('Error creating category:', { error: error.message });
+    res.status(500).json({ error: 'Failed to create category' });
+  }
+});
+
+app.put('/api/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description } = req.body;
+    const pool = require('./config/database');
+    
+    const result = await pool.query(
+      `UPDATE categories 
+       SET name = $1, description = $2, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3
+       RETURNING id, name, description, created_at, updated_at`,
+      [name, description, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+    
+    res.json(result.rows[0]);
+    logger.info('Category updated successfully', { id });
+  } catch (error) {
+    logger.error('Error updating category:', { error: error.message });
+    res.status(500).json({ error: 'Failed to update category' });
+  }
+});
+
+app.delete('/api/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pool = require('./config/database');
+    
+    const result = await pool.query(
+      'DELETE FROM categories WHERE id = $1 RETURNING id',
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+    
+    res.json({ message: 'Category deleted successfully' });
+    logger.info('Category deleted successfully', { id });
+  } catch (error) {
+    logger.error('Error deleting category:', { error: error.message });
+    res.status(500).json({ error: 'Failed to delete category' });
   }
 });
 

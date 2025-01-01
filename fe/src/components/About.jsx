@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { logger } from '../services/logger';
+import { aboutStyles } from '../styles/about';
 
 function About() {
   const [systemInfo, setSystemInfo] = useState({
@@ -40,12 +41,12 @@ function About() {
   }, []);
 
   return (
-    <Box sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}>
-      <Paper elevation={3} sx={{ p: 3 }}>
+    <Box sx={aboutStyles.container}>
+      <Paper elevation={3} sx={aboutStyles.paper}>
         <Typography variant="h4" gutterBottom>
-          About System
+          System Information
         </Typography>
-        <Divider sx={{ my: 2 }} />
+        <Divider sx={aboutStyles.divider} />
         
         <List>
           <ListItem>

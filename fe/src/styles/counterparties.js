@@ -10,4 +10,13 @@ export const counterpartyStyles = {
   actionCell: {
     textAlign: 'right'
   }
+};
+
+export const counterpartyDialogStyles = {
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
+    paddingTop: 2
+  }
 }; 

@@ -10,4 +10,13 @@ export const categoryStyles = {
   actionCell: {
     textAlign: 'right'
   }
+};
+
+export const categoryDialogStyles = {
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
+    paddingTop: 2
+  }
 }; 

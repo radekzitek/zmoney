@@ -13,7 +13,9 @@ import {
   Fab,
   TextField,
   CircularProgress,
-  Alert
+  Alert,
+  Snackbar,
+  Alert as MuiAlert
 } from '@mui/material';
 import { 
   Add as AddIcon,
@@ -25,6 +27,8 @@ import { useState, useEffect } from 'react';
 import { logger } from '../services/logger';
 import { commonStyles } from '../styles/common';
 import { categoryStyles } from '../styles/categories';
+import CategoryDialog from './CategoryDialog';
+import ConfirmDialog from './ConfirmDialog';
 
 function Categories() {
   const [categories, setCategories] = useState([]);
@@ -33,6 +37,10 @@ function Categories() {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
     fetchCategories();
@@ -52,6 +60,69 @@ function Categories() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAdd = () => {
+    setSelectedCategory(null);
+    setDialogOpen(true);
+  };
+
+  const handleEdit = (category) => {
+    setSelectedCategory(category);
+    setDialogOpen(true);
+  };
+
+  const handleDelete = (category) => {
+    setSelectedCategory(category);
+    setConfirmDialogOpen(true);
+  };
+
+  const handleSave = async (formData) => {
+    try {
+      const url = selectedCategory
+        ? `${import.meta.env.VITE_API_URL}/categories/${selectedCategory.id}`
+        : `${import.meta.env.VITE_API_URL}/categories`;
+      
+      const response = await fetch(url, {
+        method: selectedCategory ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) throw new Error('Failed to save category');
+      
+      await fetchCategories();
+      setDialogOpen(false);
+      showNotification(
+        `Category ${selectedCategory ? 'updated' : 'created'} successfully`,
+        'success'
+      );
+    } catch (error) {
+      logger.error('Error saving category:', { error: error.message });
+      showNotification('Failed to save category', 'error');
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/categories/${selectedCategory.id}`,
+        { method: 'DELETE' }
+      );
+
+      if (!response.ok) throw new Error('Failed to delete category');
+      
+      await fetchCategories();
+      setConfirmDialogOpen(false);
+      showNotification('Category deleted successfully', 'success');
+    } catch (error) {
+      logger.error('Error deleting category:', { error: error.message });
+      showNotification('Failed to delete category', 'error');
+    }
+  };
+
+  const showNotification = (message, severity) => {
+    setNotification({ open: true, message, severity });
   };
 
   const filteredCategories = categories.filter(category => 
@@ -127,10 +198,10 @@ function Categories() {
                     <TableCell>{formatDate(category.created_at)}</TableCell>
                     <TableCell>{formatDate(category.updated_at)}</TableCell>
                     <TableCell sx={categoryStyles.actionCell}>
-                      <IconButton size="small">
+                      <IconButton size="small" onClick={() => handleEdit(category)}>
                         <EditIcon />
                       </IconButton>
-                      <IconButton size="small">
+                      <IconButton size="small" onClick={() => handleDelete(category)}>
                         <DeleteIcon />
                       </IconButton>
                     </TableCell>
@@ -160,10 +231,41 @@ function Categories() {
       <Fab 
         color="primary" 
         aria-label="add"
+        onClick={handleAdd}
         sx={commonStyles.actionButton}
       >
         <AddIcon />
       </Fab>
+
+      <CategoryDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onSave={handleSave}
+        category={selectedCategory}
+      />
+
+      <ConfirmDialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Category"
+        message={`Are you sure you want to delete ${selectedCategory?.name}?`}
+      />
+
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={() => setNotification({ ...notification, open: false })}
+      >
+        <MuiAlert 
+          elevation={6} 
+          variant="filled" 
+          severity={notification.severity}
+          onClose={() => setNotification({ ...notification, open: false })}
+        >
+          {notification.message}
+        </MuiAlert>
+      </Snackbar>
     </Box>
   );
 }

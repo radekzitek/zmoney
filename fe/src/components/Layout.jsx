@@ -9,7 +9,9 @@ function Layout({ children, toggleTheme, mode }) {
         <Navbar toggleTheme={toggleTheme} mode={mode} />
       </Box>
       <Box sx={layoutStyles.contentContainer}>
-        {children}
+        <Box sx={layoutStyles.centeredContent}>
+          {children}
+        </Box>
       </Box>
     </>
   );
